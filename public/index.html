@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Search with AWS Rekognition</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #e6ceb2;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            background-color: #ffffff;
+            padding: 20px;
+            margin: 0 auto;
+            width: 400px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        input[type="file"],
+        input[type="text"] {
+            width: 90%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #f59e1d;
+            color: #fff;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message, #results {
+            margin-top: 20px;
+        }
+        p {
+            color: #007bff;
+        }
+        #results h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ค้นหาสิ่งที่คุณต้องการในวิดีโอ</h1>
+    <h3>คุณต้องการค้นหาอะไร? ลองอัปโหลดวิดีโอและสิ่งที่คุณต้องการค้นหาดูสิ</h3>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="video">Upload Video:</label><br>
+        <input type="file" id="video" name="video" accept="video/*" required><br><br>
+
+        <label for="searchTerm">สิ่งที่ต้องการค้นหา:</label><br>
+        <input type="text" id="searchTerm" name="searchTerm" placeholder="e.g., person, car" required><br><br>
+
+        <button type="submit">Upload and Search</button>
+    </form>
+
+    <p id="message"></p>
+
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const videoFile = document.getElementById('video').files[0];
+            const searchTerm = document.getElementById('searchTerm').value;
+
+            formData.append('video', videoFile);
+            formData.append('searchTerm', searchTerm);
+
+            document.getElementById('message').textContent = 'Uploading and processing...';
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const result = await response.json();
+            document.getElementById('message').textContent = result.message;
+
+            if (result.labels) {
+                const resultDiv = document.getElementById('results');
+                resultDiv.innerHTML = '<h2>Detected Labels:</h2>';
+                result.labels.forEach(label => {
+                    resultDiv.innerHTML += `<p>${label.Name}: from ${label.StartTime} seconds to ${label.EndTime} seconds</p>`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
